@@ -20,6 +20,78 @@
       min-height: 100vh;
       position: relative;
     }
+    
+    /* STYLES CHO POPUP ĐĂNG NHẬP */
+    .login-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .login-box {
+      background-color: #4a372f;
+      border: 1px solid #7d6355;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 360px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      text-align: center;
+    }
+    .login-box h2 {
+      margin-bottom: 8px;
+      font-size: 20px;
+      color: #ffd700;
+    }
+    .login-box p {
+      font-size: 13px;
+      color: #d1c2ba;
+      margin-bottom: 20px;
+    }
+    .login-input {
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #7d6355;
+      background-color: #3b2c26;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .login-input:focus {
+      border-color: #ffd700;
+    }
+    .btn-login {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(45deg, #ffd700, #ffa500);
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-login:hover {
+      opacity: 0.9;
+    }
+    .error-msg {
+      color: #ff6b6b;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* GIAO DIỆN CHÍNH */
     .container {
       width: 100%;
       max-width: 520px;
@@ -59,10 +131,18 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
-    .btn-reset-floating {
+    /* KHU VỰC CÁC NÚT ĐIỀU KHIỂN NỔI GÓC DƯỚI BÊN PHẢI */
+    .floating-actions {
       position: fixed;
       bottom: 12px;
       right: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    .btn-action-floating {
       background-color: rgba(60, 50, 45, 0.6);
       color: #a89082;
       border: 1px solid #5a443a;
@@ -72,20 +152,50 @@
       cursor: pointer;
       opacity: 0.5;
       transition: all 0.2s ease;
-      z-index: 9999;
     }
-    .btn-reset-floating:hover {
+    .btn-action-floating:hover {
       opacity: 1;
-      background-color: #7d2626;
       color: #fff;
+    }
+    
+    /* Hover nút Logout */
+    .btn-logout-floating:hover {
+      background-color: #d9534f;
+      border-color: #d9534f;
+    }
+
+    /* Hover nút Reset */
+    .btn-reset-floating:hover {
+      background-color: #7d2626;
       border-color: #7d2626;
     }
 
+    /* TÍNH NĂNG THANH CUỘN CHO DANH SÁCH NHẬP NHIỀU */
     .item-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      max-height: 65vh; /* Giới hạn chiều cao danh sách */
+      overflow-y: auto;  /* Tự động xuất hiện thanh cuộn */
+      padding-right: 6px; /* Khoảng trống cho thanh cuộn */
     }
+
+    /* Tùy chỉnh thanh cuộn cùng tone màu web */
+    .item-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .item-list::-webkit-scrollbar-track {
+      background: #3b2c26;
+      border-radius: 4px;
+    }
+    .item-list::-webkit-scrollbar-thumb {
+      background: #7d6355;
+      border-radius: 4px;
+    }
+    .item-list::-webkit-scrollbar-thumb:hover {
+      background: #a89082;
+    }
+
     .item {
       display: flex;
       align-items: center;
@@ -223,23 +333,90 @@
       .product-img { width: 50px; height: 50px; }
       .user-name { font-size: 15px; }
       .model { font-size: 12px; }
+      .item-list { max-height: 58vh; }
     }
   </style>
 </head>
 <body>
 
+  <!-- POPUP ĐĂNG NHẬP CHẶN MÀN HÌNH -->
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h2>XÁC NHẬN TRUY CẬP</h2>
+      <p>Vui lòng đăng nhập tài khoản được cấp quyền</p>
+      <input type="text" id="loginUser" class="login-input" placeholder="Tên đăng nhập">
+      <input type="password" id="loginPass" class="login-input" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter') performLogin()">
+      <button class="btn-login" onclick="performLogin()">ĐĂNG NHẬP</button>
+      <div class="error-msg" id="loginError">Tài khoản hoặc mật khẩu không chính xác!</div>
+    </div>
+  </div>
+
+  <!-- GIAO DIỆN CHÍNH DỰ ÁN -->
   <div class="container">
     <div class="search-bar">
-      <input type="text" id="usernameInput" placeholder="Please comment your name (e.g. John+10 or press \)..." onkeydown="handleKeyDown(event)" onkeyup="handleKeyUp(event)">
+      <input type="text" id="usernameInput" placeholder="Please comment your name..." onkeydown="handleKeyDown(event)" onkeyup="handleKeyUp(event)">
       <img src="images/lovetiktok.png" alt="TikTok" class="tiktok-img" onerror="this.style.display='none'">
     </div>
 
     <div class="item-list" id="itemList"></div>
   </div>
 
-  <button class="btn-reset-floating" onclick="resetAllData()">Reset Data</button>
+  <!-- NHÓM NÚT BẤM NỔI Ở GÓC DƯỚI BÊN PHẢI -->
+  <div class="floating-actions">
+    <button class="btn-action-floating btn-logout-floating" onclick="performLogout()">Đăng xuất</button>
+    <button class="btn-action-floating btn-reset-floating" onclick="resetAllData()">Reset Data</button>
+  </div>
 
   <script>
+    // ==========================================
+    // DANH SÁCH TÀI KHOẢN ĐƯỢC PHÉP ĐĂNG NHẬP
+    // ==========================================
+    const allowedUsers = [
+      { user: "admin", pass: "123456" },
+      { user: "limited1", pass: "111111" },
+      { user: "limited2", pass: "222222" },
+      { user: "limited3", pass: "111111" },
+      { user: "limited4", pass: "222222" },
+      { user: "limited5", pass: "111111" },
+      { user: "limited6", pass: "222222" },
+      { user: "limited7", pass: "111111" },
+      { user: "limited8", pass: "222222" }
+    ];
+
+    function performLogin() {
+      const uInput = document.getElementById('loginUser').value.trim();
+      const pInput = document.getElementById('loginPass').value.trim();
+      const errorMsg = document.getElementById('loginError');
+
+      const isValid = allowedUsers.some(account => account.user === uInput && account.pass === pInput);
+
+      if (isValid) {
+        document.getElementById('loginOverlay').style.display = 'none';
+        sessionStorage.setItem('isLoggedIn', 'true');
+        document.getElementById('loginUser').value = "";
+        document.getElementById('loginPass').value = "";
+        errorMsg.style.display = 'none';
+      } else {
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    // XỬ LÝ ĐĂNG XUẤT
+    function performLogout() {
+      sessionStorage.removeItem('isLoggedIn');
+      document.getElementById('loginOverlay').style.display = 'flex';
+    }
+
+    // Tự động kiểm tra nếu đã đăng nhập trong phiên làm việc hiện tại
+    window.addEventListener('DOMContentLoaded', () => {
+      if (sessionStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('loginOverlay').style.display = 'none';
+      }
+    });
+
+    // ==========================================
+    // DỮ LIỆU VÀ XỬ LÝ DỰ ÁN KHÁC
+    // ==========================================
     const phoneDatabase = [
       { brand: "OPPO", model: "Find X6 Pro 512GB", img: "images/FindX6Pro512GB.png" },
       { brand: "OPPO", model: "Find X7 Ultra 512GB", img: "images/FindX7Ultra512GB.png" },
